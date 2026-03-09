@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>MeetingSpeak Demo VHS Vault</title>
+    <title>MeetingSpeak Demo | Watchlist Control Room</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
@@ -15,77 +15,150 @@
       <a class="brand" href="../docs/index.html">MeetingSpeak.js</a>
       <nav class="topnav" aria-label="Demo navigation">
         <a href="../docs/index.html">Docs</a>
-        <a href="#watch-board">Watch List</a>
+        <a href="#watch-board">Board</a>
+        <a href="#recommendations-panel">Recommendations</a>
       </nav>
     </header>
 
     <main class="shell">
+      <section id="hero-panel" class="chrome-panel hero-panel">
+        <div class="hero-copy">
+          <p class="eyebrow">v2 demo</p>
+          <h1>Run a tiny watchlist app with richer state, rendering, feedback, and just enough workplace satire.</h1>
+          <p class="hero-lede">
+            Everything here runs directly in the browser with one script file, no build step, and no framework trying to
+            unionize your markup.
+          </p>
+        </div>
+
+        <div class="hero-controls">
+          <label class="field compact-field">
+            <span>Tone mode</span>
+            <select id="tone-select">
+              <option value="professional">Professional</option>
+              <option value="buzzword">Buzzword</option>
+              <option value="boardroom">Boardroom</option>
+              <option value="unhinged">Unhinged</option>
+            </select>
+          </label>
+
+          <div id="tone-caption" class="tone-caption">Professional mode keeps the joke mostly in the names.</div>
+        </div>
+
+        <div id="hero-stats" class="hero-stats" aria-live="polite"></div>
+      </section>
+
       <section class="app-grid">
         <aside class="sidebar-stack">
           <section id="composer-panel" class="chrome-panel sidebar-panel">
             <div class="section-heading">
               <div>
-                <p class="eyebrow">Rental counter</p>
-                <h2 id="composer-kicker">Tape something new</h2>
+                <p class="eyebrow">Composer</p>
+                <h2 id="composer-kicker">Add something to the queue</h2>
               </div>
+              <button id="restore-samples" type="button" class="button button-secondary">Restore samples</button>
             </div>
 
-            <form id="watch-form" data-mode="add">
+            <form id="watch-form">
               <label class="field">
                 <span>Title</span>
-                <input id="title-input" type="text" placeholder="The X-Files" />
+                <input id="title-input" type="text" placeholder="Severance" />
               </label>
 
               <label class="field">
-                <span>Genre</span>
-                <input id="genre-input" type="text" placeholder="Paranormal paranoia" />
+                <span>Service</span>
+                <select id="service-input">
+                  <option>Apple TV+</option>
+                  <option>Criterion Channel</option>
+                  <option>Dropout</option>
+                  <option>Max</option>
+                  <option>Netflix</option>
+                  <option>Peacock</option>
+                  <option>Prime Video</option>
+                  <option>YouTube</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <span>Status</span>
+                <select id="status-input">
+                  <option value="queued">Queued</option>
+                  <option value="watching">Watching</option>
+                  <option value="watched">Watched</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <span>Trailer line</span>
+                <textarea id="note-input" rows="3" placeholder="Petty office politics. Excellent coats."></textarea>
               </label>
 
               <div class="form-actions">
-                <button id="submit-copy" type="submit" class="button button-primary">Add to watch list</button>
-                <button id="cancel-edit" type="button" class="button button-secondary" hidden>Cancel edit</button>
+                <button id="submit-copy" type="submit" class="button button-primary">Add to board</button>
+                <button id="cancel-edit" type="button" class="button button-ghost" hidden>Cancel edit</button>
               </div>
             </form>
+
+            <div class="preview-meta">
+              <p>Double-click the preview to punch up the trailer line.</p>
+            </div>
+
+            <article id="preview-card" class="preview-card" tabindex="0">
+              <p class="preview-label">Preview</p>
+              <h3 id="preview-title">Severance</h3>
+              <p id="preview-service" class="preview-service">Criterion Channel</p>
+              <p id="preview-note" class="preview-note">Petty office politics. Excellent coats.</p>
+              <div id="preview-status" class="status-chip">Queued</div>
+            </article>
+          </section>
+
+          <section id="recommendations-panel" class="chrome-panel sidebar-panel">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Recommendations</p>
+                <h2>Mock suggestions, real loading state</h2>
+              </div>
+              <button id="refresh-recommendations" type="button" class="button button-ghost">Refresh picks</button>
+            </div>
+
+            <p class="panel-copy">
+              This panel uses <code>PULSE_CHECK</code>, <code>AIR_COVER</code>, and list rendering helpers to simulate a tiny
+              async workflow without pretending a local HTML file has an actual backend.
+            </p>
+
+            <div id="recommendations" class="recommendations"></div>
           </section>
 
           <section class="chrome-panel sidebar-panel">
             <div class="section-heading">
               <div>
-                <p class="eyebrow">Sneak preview</p>
-                <h2>Tonight on channel 62</h2>
+                <p class="eyebrow">Activity</p>
+                <h2>State changes with a paper trail</h2>
               </div>
             </div>
 
-            <div id="preview-shell" class="preview-shell">
-              <div class="preview-sticker">Be kind. Rewind.</div>
-              <p class="preview-label">Up next</p>
-              <h3 id="preview-title">Mystery Science Theater 3000</h3>
-              <p id="preview-genre">Comfort-riffing nonsense</p>
-              <p id="preview-stamp" class="preview-stamp">Fresh off the dial</p>
-            </div>
+            <ul id="activity-feed" class="activity-feed"></ul>
           </section>
         </aside>
 
         <section id="watch-board" class="chrome-panel board-panel">
           <div class="section-heading board-heading">
             <div>
-              <p class="eyebrow">Shelf management</p>
-              <h2>Search the stack, sort the marathon, and keep the weird stuff handy.</h2>
+              <p class="eyebrow">Board</p>
+              <h2>Filter the queue, cycle statuses, edit entries, and keep the whole thing readable in one pass.</h2>
             </div>
-            <button id="restore-samples" type="button" class="button button-secondary">Restore sample tapes</button>
+            <a id="clear-filters" href="#watch-board" class="button button-ghost">Clear filters</a>
           </div>
 
           <div class="toolbar">
             <label class="field">
               <span>Search</span>
-              <input id="search-input" type="search" placeholder="Title or genre" />
+              <input id="search-input" type="search" placeholder="Title, service, or trailer line" />
             </label>
 
             <label class="field">
-              <span>Genre</span>
-              <select id="genre-filter">
-                <option value="all">All genres</option>
-              </select>
+              <span>Service</span>
+              <select id="service-filter"></select>
             </label>
 
             <label class="field">
@@ -93,24 +166,31 @@
               <select id="status-filter">
                 <option value="all">All statuses</option>
                 <option value="queued">Queued</option>
+                <option value="watching">Watching</option>
                 <option value="watched">Watched</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Sort</span>
+              <select id="sort-filter">
+                <option value="recent">Newest first</option>
+                <option value="title">Title A-Z</option>
+                <option value="service">Service A-Z</option>
+                <option value="status">Status flow</option>
               </select>
             </label>
           </div>
 
-          <div id="board-status" class="board-status">Loading stack...</div>
-
-          <div id="empty-state" class="empty-state" hidden>
-            <h3>No tapes in this slice of the timeline.</h3>
-            <p>Change the filters or restore the sample lineup.</p>
-          </div>
-
+          <div id="summary-bar" class="summary-bar"></div>
+          <div id="board-status" class="board-status">Standing by.</div>
+          <div id="empty-state-shell"></div>
           <div id="watch-list" class="watch-list" aria-live="polite"></div>
         </section>
       </section>
     </main>
 
-    <div id="toast-stack" class="toast-stack" aria-live="polite" aria-atomic="true"></div>
+    <div id="toast-stack" class="toast-stack" data-feedback-mode="stack" aria-live="polite" aria-atomic="true"></div>
     <div id="sr-updates" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
     <script src="../MeetingSpeak.js"></script>

@@ -1,53 +1,63 @@
-# MeetingSpeak
+# MeetingSpeak v2
 
-MeetingSpeak is a browser-first JavaScript runtime DSL that maps polished business-jargon function names onto normal browser APIs. It is a real runtime, not a compiler, parser, or framework.
+MeetingSpeak is a browser-first JavaScript runtime DSL that maps corporate-jargon function names onto ordinary browser APIs. It is a real runtime, not a compiler, parser, framework, or standalone language.
 
-## What It Is
+v2 keeps the v1 joke intact and makes the runtime more useful for small static apps:
 
-- A single `MeetingSpeak.js` file you can load with a script tag
-- A thin wrapper layer over DOM selection, content updates, events, storage, async helpers, network calls, logging, and accessibility utilities
-- A novelty project that is still practical enough to build a small static app
+- rendering helpers like `SPIN_UP`, `REORG`, `RUN_IT_UP_THE_FLAGPOLE`, and `LOW_HANGING_FRUIT`
+- subscription-aware state with `OPEN_LOOP`, `CLOSE_THE_LOOP`, `LISTEN_FOR_ALIGNMENT`, and `TRUE_UP`
+- feedback and loading helpers like `WIN_THE_ROOM`, `TAKE_THE_L`, and `PULSE_CHECK`
+- better event ergonomics with `HEAR_ME_OUT`, `TAKE_IT_OFFLINE`, `KEY_STAKEHOLDER`, and `HARD_STOP`
+- small storage lifecycle and tone-mode additions without changing the browser-first setup
+
+## What MeetingSpeak Is
+
+- One script file: `MeetingSpeak.js`
+- Thin wrappers over DOM, events, storage, timing, fetch, accessibility, and small UI helpers
+- A novelty runtime that still stays inspectable and dependency-free
 
 ## Quick Start
 
 ```html
-<div id="status"></div>
-<button id="save">Save</button>
+<ul id="queue"></ul>
 
 <script src="./MeetingSpeak.js"></script>
 <script>
-  BROADCAST('#status', 'Ready to align.')
+  OPEN_LOOP('queue', ['Columbo', 'Party Down'])
 
-  ACTION_ITEM('#save', () => {
-    INSTITUTIONAL_KNOWLEDGE('draft', { savedAt: Date.now() })
-    BROADCAST('#status', 'Draft has been socialized.')
-  })
+  function renderQueue(items) {
+    RUN_IT_UP_THE_FLAGPOLE('#queue', items, (title) => `<li>${title}</li>`)
+  }
+
+  LISTEN_FOR_ALIGNMENT('queue', renderQueue)
+  renderQueue(SINGLE_SOURCE_OF_TRUTH('queue'))
 </script>
 ```
 
 Namespace usage is also supported:
 
 ```js
-MeetingSpeak.BROADCAST('#status', 'Ready to align.')
+MeetingSpeak.RUN_IT_UP_THE_FLAGPOLE('#queue', items, renderItem)
 ```
 
 ## Project Structure
 
-- `MeetingSpeak.js`: canonical v1 browser runtime
-- `demo/`: static product-style demo site built primarily with MeetingSpeak calls
-- `docs/`: static documentation site with examples and API reference
-- `spec.md`: product spec and source of truth for the v1 API
+- `MeetingSpeak.js` - the runtime, including the full v1 API plus v2 additions
+- `docs/` - static documentation site for v2
+- `demo/` - static demo app showing state, rendering, feedback, and loading helpers
+- `spec.md` - original v1 spec
+- `v2.spec.md` - v2 source of truth
 
-## Open The Demo And Docs
+## Run Locally
 
 Open these files directly in a browser:
 
-- `demo/index.html`
 - `docs/index.html`
+- `demo/index.html`
 
-No build step or package install is required.
+No package install or build step is required for local use.
 
-## Build A Dist Folder
+## Optional Dist Build
 
 If you want a distributable copy:
 
@@ -56,26 +66,33 @@ npm install
 npm run build
 ```
 
-That creates a flattened `dist/` with:
-
-- `dist/MeetingSpeak.js` minified
-- `dist/index.html`, `dist/docs.css`, and `dist/docs.js` for the docs site
-- `dist/demo.html`, `dist/demo.css`, and `dist/demo.js` for the demo site
-
-The docs and demo assets stay readable. Only the runtime is minified.
-
-## Example Snippet
+## Small Example
 
 ```js
-SOURCE_OF_TRUTH('projects', [
-  { name: 'StackLoop', owner: 'Alex' },
-  { name: 'Recipe Digitizer', owner: 'Jordan' }
-])
+OPEN_LOOP('watchlist', LOOK_IT_UP_NOW('watchlist') || [])
 
-const names = PIPELINE(MeetingSpeak.state.projects, (project) => project.name)
-ORG_UPDATE('#results', names.map((name) => `<li>${name}</li>`).join(''))
+LISTEN_FOR_ALIGNMENT('watchlist', function (items) {
+  RUN_IT_UP_THE_FLAGPOLE(
+    '#watchlist',
+    items,
+    function (item) {
+      return '<li>' + item.title + '</li>'
+    },
+    '<li>No titles yet.</li>'
+  )
+
+  HARD_COMMIT('watchlist', items)
+})
+
+ACTION_ITEM('#add-title', function () {
+  TRUE_UP('watchlist', function (items) {
+    return items.concat([{ title: CAPTURE_INPUT('#title-input') }])
+  })
+
+  WIN_THE_ROOM('#toast', 'Title added.')
+})
 ```
 
-## Current Scope
+## Scope
 
-MeetingSpeak currently ships as a browser runtime DSL. It does not yet include a standalone language, parser, or transpiler. The API surface is intentionally thin and browser-native so the joke stays readable and the behavior stays debuggable.
+MeetingSpeak is still a browser runtime DSL. v2 does not turn it into a standalone language, a component system, a reactive framework, or a build-tool story.

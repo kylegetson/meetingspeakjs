@@ -1,37 +1,64 @@
 var STORAGE_KEYS = {
-  watchlist: 'meetingspeak-demo-watchlist-v2'
+  watchlist: 'meetingspeak-demo-watchlist-v2',
+  filters: 'meetingspeak-demo-filters-v2',
+  tone: 'meetingspeak-demo-tone-v2'
 };
 
-var DEFAULT_ENTRIES = [
+var RETENTION_MS = 1000 * 60 * 60 * 24 * 30;
+var STATUS_LABELS = {
+  queued: 'Queued',
+  watching: 'Watching',
+  watched: 'Watched'
+};
+var STATUS_FLOW = ['queued', 'watching', 'watched'];
+var TRAILER_LINES = [
+  'Prestige nonsense, but with excellent lighting.',
+  'Mildly cursed. Very streamable.',
+  'Somehow both sincere and deeply unserious.',
+  'A perfect use of one irresponsible weeknight.',
+  'Highly aligned with dramatic exits and sharp coats.'
+];
+
+var DEFAULT_WATCHLIST = [
   {
-    id: 'entry-1',
-    title: 'Buffy the Vampire Slayer',
-    genre: 'Monster-of-the-week mayhem',
-    watchedAt: '2026-03-08T20:15:00.000Z',
-    createdAt: '2026-03-06T19:30:00.000Z'
+    id: 'tape-1',
+    title: 'Severance',
+    service: 'Apple TV+',
+    status: 'watching',
+    note: 'Prestige office dread with suspiciously beautiful hallways.',
+    createdAt: '2026-03-07T20:30:00.000Z'
   },
   {
-    id: 'entry-2',
-    title: 'The Mummy',
-    genre: 'Adventure with maximum sand',
-    watchedAt: null,
-    createdAt: '2026-03-07T18:00:00.000Z'
+    id: 'tape-2',
+    title: 'The Nice Guys',
+    service: 'Max',
+    status: 'queued',
+    note: 'Los Angeles chaos. Extremely loose governance.',
+    createdAt: '2026-03-08T18:00:00.000Z'
   },
   {
-    id: 'entry-3',
-    title: 'Xena: Warrior Princess',
-    genre: 'Campy heroic chaos',
-    watchedAt: null,
-    createdAt: '2026-03-09T10:45:00.000Z'
+    id: 'tape-3',
+    title: 'Taskmaster',
+    service: 'YouTube',
+    status: 'watched',
+    note: 'Proof that low-stakes nonsense is still a premium product.',
+    createdAt: '2026-03-09T00:15:00.000Z'
   }
 ];
 
-SOURCE_OF_TRUTH('entries', LOOK_IT_UP(STORAGE_KEYS.watchlist) || DEFAULT_ENTRIES.slice());
-SOURCE_OF_TRUTH('query', '');
-SOURCE_OF_TRUTH('genreFilter', 'all');
-SOURCE_OF_TRUTH('statusFilter', 'all');
-SOURCE_OF_TRUTH('editingId', null);
-SOURCE_OF_TRUTH('dragId', null);
+var DEFAULT_DRAFT = {
+  title: '',
+  service: 'Criterion Channel',
+  status: 'queued',
+  note: ''
+};
+
+var DEFAULT_FILTERS = {
+  query: '',
+  service: 'all',
+  status: 'all',
+  sort: 'recent'
+};
 
 function escapeHtml(value) {
   return String(value)
@@ -42,12 +69,44 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
-function formatWatchedStamp(iso) {
-  if (!iso) {
-    return 'Status: still sitting in the shrink wrap.';
-  }
+function cloneWatchlist(items) {
+  return PIPELINE(items, function (item) {
+    return {
+      id: item.id,
+      title: item.title,
+      service: item.service,
+      status: item.status,
+      note: item.note,
+      createdAt: item.createdAt
+    };
+  });
+}
 
-  return 'Watched ' + new Date(iso).toLocaleString([], {
+function getWatchlist() {
+  return SINGLE_SOURCE_OF_TRUTH('watchlist') || [];
+}
+
+function getDraft() {
+  return SINGLE_SOURCE_OF_TRUTH('draft') || DEFAULT_DRAFT;
+}
+
+function getFilters() {
+  return SINGLE_SOURCE_OF_TRUTH('filters') || DEFAULT_FILTERS;
+}
+
+function nowStamp() {
+  return new Date().toISOString();
+}
+
+function formatShortTime(iso) {
+  return new Date(iso).toLocaleTimeString([], {
+    hour: 'numeric',
+    minute: '2-digit'
+  });
+}
+
+function formatCreatedAt(iso) {
+  return new Date(iso).toLocaleString([], {
     month: 'short',
     day: 'numeric',
     hour: 'numeric',
@@ -55,192 +114,543 @@ function formatWatchedStamp(iso) {
   });
 }
 
-function showToast(message, tone) {
-  ESCALATE('meetingspeak:toast', {
-    message: message,
-    tone: tone || 'default'
+function getStatusCopy(status) {
+  if (status === 'watching') {
+    return 'In flight';
+  }
+
+  if (status === 'watched') {
+    return 'Closed out';
+  }
+
+  return 'Queued';
+}
+
+function getToneCaption(mode) {
+  if (mode === 'buzzword') {
+    return 'Buzzword mode adds a little more jargon without fully setting the room on fire.';
+  }
+
+  if (mode === 'boardroom') {
+    return 'Boardroom mode sounds like the quarterly review slid directly into the runtime.';
+  }
+
+  if (mode === 'unhinged') {
+    return 'Unhinged mode lets the logs sound like morale has entered the chat.';
+  }
+
+  return 'Professional mode keeps the joke mostly in the names.';
+}
+
+function getStatusCounts(items) {
+  return NET_NET(items, function (summary, item) {
+    summary[item.status] += 1;
+    return summary;
+  }, {
+    queued: 0,
+    watching: 0,
+    watched: 0
   });
 }
 
-function renderToasts() {
-  document.addEventListener('meetingspeak:toast', function (event) {
-    var id = 'toast-' + Date.now();
-    var toneClass = event.detail.tone === 'warning' ? ' toast-warning' : '';
-
-    SOCIALIZE(
-      '#toast-stack',
-      '<div id="' + id + '" class="toast' + toneClass + '">' + escapeHtml(event.detail.message) + '</div>'
-    );
-    GIVE_IT_A_VOICE('#sr-updates', event.detail.message);
-
-    CIRCLE_BACK_IN(2600, function () {
-      if (IS_ON_THE_CALENDAR('#' + id)) {
-        SUNSET('#' + id);
-      }
-    });
-  });
-}
-
-function persistEntries() {
-  INSTITUTIONAL_KNOWLEDGE(STORAGE_KEYS.watchlist, MeetingSpeak.state.entries);
-}
-
-function getGenres() {
-  var genres = NET_NET(MeetingSpeak.state.entries, function (list, entry) {
-    if (entry.genre && list.indexOf(entry.genre) === -1) {
-      list.push(entry.genre);
+function getServices(items) {
+  var services = NET_NET(items, function (list, item) {
+    if (item.service && list.indexOf(item.service) === -1) {
+      list.push(item.service);
     }
 
     return list;
-  }, []);
+  }, ['all']);
 
-  return SORT_THE_DECK(genres, function (a, b) {
+  return SORT_THE_DECK(services, function (a, b) {
+    if (a === 'all') {
+      return -1;
+    }
+
+    if (b === 'all') {
+      return 1;
+    }
+
     return a.localeCompare(b);
   });
 }
 
-function getVisibleEntries() {
-  var query = MeetingSpeak.state.query.toLowerCase();
-  var genreFilter = MeetingSpeak.state.genreFilter;
-  var statusFilter = MeetingSpeak.state.statusFilter;
+function getVisibleItems() {
+  var filters = getFilters();
+  var query = filters.query.toLowerCase();
+  var filtered = FILTER_FOR_FIT(getWatchlist(), function (item) {
+    var haystack = [item.title, item.service, item.note].join(' ').toLowerCase();
+    var matchesQuery = !query || haystack.indexOf(query) !== -1;
+    var matchesService = filters.service === 'all' || item.service === filters.service;
+    var matchesStatus = filters.status === 'all' || item.status === filters.status;
 
-  return FILTER_FOR_FIT(MeetingSpeak.state.entries, function (entry) {
-    var matchesQuery = !query ||
-      entry.title.toLowerCase().indexOf(query) !== -1 ||
-      entry.genre.toLowerCase().indexOf(query) !== -1;
-    var matchesGenre = genreFilter === 'all' || entry.genre === genreFilter;
-    var matchesStatus = statusFilter === 'all' ||
-      (statusFilter === 'watched' && !!entry.watchedAt) ||
-      (statusFilter === 'queued' && !entry.watchedAt);
-
-    return matchesQuery && matchesGenre && matchesStatus;
-  });
-}
-
-function updateBoardStatus(message, tone) {
-  BROADCAST('#board-status', message);
-  DEPRIORITIZE('#board-status', 'warning');
-  DEPRIORITIZE('#board-status', 'success');
-
-  if (tone) {
-    ALIGN_ON('#board-status', tone);
-  }
-}
-
-function renderGenreFilter() {
-  var current = MeetingSpeak.state.genreFilter;
-  var options = ['<option value="all">All genres</option>'];
-
-  PIPELINE(getGenres(), function (genre) {
-    options.push('<option value="' + escapeHtml(genre) + '">' + escapeHtml(genre) + '</option>');
+    return matchesQuery && matchesService && matchesStatus;
   });
 
-  ORG_UPDATE('#genre-filter', options.join(''));
-
-  if (current !== 'all' && getGenres().indexOf(current) === -1) {
-    ALIGN('genreFilter', 'all');
-    current = 'all';
+  if (filters.sort === 'title') {
+    return SORT_THE_DECK(filtered, function (a, b) {
+      return a.title.localeCompare(b.title);
+    });
   }
 
-  PREFILL('#genre-filter', current);
-}
-
-function clearDropTargets() {
-  Array.prototype.forEach.call(FIND_STAKEHOLDERS('.watch-card'), function (card) {
-    card.classList.remove('dragging');
-    card.classList.remove('drop-before');
-    card.classList.remove('drop-after');
-  });
-}
-
-function renderEntries() {
-  var visibleEntries = getVisibleEntries();
-
-  renderGenreFilter();
-
-  if (!visibleEntries.length) {
-    TAKE_COVER('#watch-list');
-    VISIBILITY_INTO('#empty-state');
-    updateBoardStatus('No tapes match this search stack. Try a broader genre or status.', 'warning');
-    return;
+  if (filters.sort === 'service') {
+    return SORT_THE_DECK(filtered, function (a, b) {
+      return a.service.localeCompare(b.service);
+    });
   }
 
-  VISIBILITY_INTO('#watch-list');
-  TAKE_COVER('#empty-state');
+  if (filters.sort === 'status') {
+    return SORT_THE_DECK(filtered, function (a, b) {
+      return STATUS_FLOW.indexOf(a.status) - STATUS_FLOW.indexOf(b.status);
+    });
+  }
 
-  var cards = PIPELINE(visibleEntries, function (entry, index) {
-    var watchedClass = entry.watchedAt ? ' watch-card watched' : ' watch-card';
-    var watchedLabel = entry.watchedAt ? 'Mark unwatched' : 'Mark watched';
-    var statusChip = entry.watchedAt ? 'Rewound and watched' : 'Queued for Friday night';
-
-    return '' +
-      '<article class="' + watchedClass.trim() + '" draggable="true" data-id="' + escapeHtml(entry.id) + '">' +
-        '<div class="card-topline">' +
-          '<span class="genre-pill">' + escapeHtml(entry.genre) + '</span>' +
-          '<span class="order-pill">Track ' + escapeHtml(String(index + 1).padStart(2, '0')) + '</span>' +
-        '</div>' +
-        '<h3>' + escapeHtml(entry.title) + '</h3>' +
-        '<p class="card-tagline">' + escapeHtml(statusChip) + '</p>' +
-        '<p class="card-meta">' + escapeHtml(formatWatchedStamp(entry.watchedAt)) + '</p>' +
-        '<div class="card-actions">' +
-          '<button class="mini-button" type="button" data-action="toggle-watch" data-id="' + escapeHtml(entry.id) + '">' + escapeHtml(watchedLabel) + '</button>' +
-          '<button class="mini-button" type="button" data-action="edit" data-id="' + escapeHtml(entry.id) + '">Edit</button>' +
-          '<button class="mini-button danger" type="button" data-action="delete" data-id="' + escapeHtml(entry.id) + '">Delete</button>' +
-        '</div>' +
-      '</article>';
+  return SORT_THE_DECK(filtered, function (a, b) {
+    return b.createdAt.localeCompare(a.createdAt);
   });
-
-  ORG_UPDATE('#watch-list', cards.join(''));
-  updateBoardStatus('Drag cards to sort the marathon lineup. Search and filters only narrow the broadcast.', 'success');
 }
 
-function setComposerMode(isEditing) {
-  TAG_FOR_FOLLOWUP('#watch-form', 'mode', isEditing ? 'edit' : 'add');
-  BROADCAST('#composer-kicker', isEditing ? 'Remix the tape' : 'Tape something new');
-  BROADCAST('#submit-copy', isEditing ? 'Save edit' : 'Add to watch list');
+function readDraftFromInputs() {
+  return {
+    title: CAPTURE_INPUT('#title-input').trim(),
+    service: CAPTURE_INPUT('#service-input'),
+    status: CAPTURE_INPUT('#status-input'),
+    note: CAPTURE_INPUT('#note-input').trim()
+  };
+}
+
+function syncInputsFromDraft() {
+  var draft = getDraft();
+
+  PREFILL('#title-input', draft.title);
+  PREFILL('#service-input', draft.service);
+  PREFILL('#status-input', draft.status);
+  PREFILL('#note-input', draft.note);
+}
+
+function syncFilterInputs() {
+  var filters = getFilters();
+
+  PREFILL('#search-input', filters.query);
+  PREFILL('#service-filter', filters.service);
+  PREFILL('#status-filter', filters.status);
+  PREFILL('#sort-filter', filters.sort);
+}
+
+function renderHeroStats() {
+  var items = getWatchlist();
+  var counts = getStatusCounts(items);
+  var stats = [
+    { label: 'Titles tracked', value: items.length, caption: 'Persisted with local storage metadata.' },
+    { label: 'Queued next', value: counts.queued, caption: 'Strong candidates for the next idle Tuesday.' },
+    { label: 'Currently watching', value: counts.watching, caption: 'Active workstreams with snacks.' },
+    { label: 'Closed out', value: counts.watched, caption: 'Deliverables already absorbed by culture.' }
+  ];
+
+  RUN_IT_UP_THE_FLAGPOLE('#hero-stats', stats, function (item) {
+    return TALK_TRACK(
+      '<article class="hero-stat"><strong>{{value}}</strong><small>{{label}}</small><small>{{caption}}</small></article>',
+      item
+    );
+  });
+}
+
+function renderToneMode() {
+  var toneMode = SINGLE_SOURCE_OF_TRUTH('toneMode');
+  PREFILL('#tone-select', toneMode);
+  BROADCAST('#tone-caption', getToneCaption(toneMode));
+}
+
+function renderComposer() {
+  var editingId = SINGLE_SOURCE_OF_TRUTH('editingId');
+  var isEditing = !!editingId;
+
+  BROADCAST('#composer-kicker', isEditing ? 'Edit the current entry' : 'Add something to the queue');
+  BROADCAST('#submit-copy', isEditing ? 'Save changes' : 'Add to board');
 
   if (isEditing) {
     VISIBILITY_INTO('#cancel-edit');
-    ALIGN_ON('#composer-panel', 'editing');
+    WAR_ROOM_MODE('#composer-panel', true);
   } else {
     TAKE_COVER('#cancel-edit');
-    DEPRIORITIZE('#composer-panel', 'editing');
+    WAR_ROOM_MODE('#composer-panel', false);
   }
 }
 
-function updatePreview() {
-  var title = CAPTURE_INPUT('#title-input').trim() || 'Mystery Science Theater 3000';
-  var genre = CAPTURE_INPUT('#genre-input').trim() || 'Comfort-riffing nonsense';
-  var mode = PULL_METADATA('#watch-form', 'mode') || 'add';
-  var stamp = mode === 'edit' ? 'Director cut in progress' : 'Fresh off the dial';
+function renderPreview() {
+  var draft = getDraft();
+  var title = draft.title || 'Severance';
+  var service = draft.service || 'Criterion Channel';
+  var note = draft.note || 'Petty office politics. Excellent coats.';
+  var status = STATUS_LABELS[draft.status] || STATUS_LABELS.queued;
 
   BROADCAST('#preview-title', title);
-  BROADCAST('#preview-genre', genre);
-  BROADCAST('#preview-stamp', stamp);
+  BROADCAST('#preview-service', service);
+  BROADCAST('#preview-note', note);
+  BROADCAST('#preview-status', status);
+}
 
-  if (mode === 'edit') {
-    BRAND_REFRESH('#preview-shell', {
-      background: 'linear-gradient(135deg, rgba(18, 248, 255, 0.32), rgba(255, 239, 89, 0.26))'
+function renderServiceFilter() {
+  RUN_IT_UP_THE_FLAGPOLE('#service-filter', getServices(getWatchlist()), function (service) {
+    var label = service === 'all' ? 'All services' : service;
+    return '<option value="' + escapeHtml(service) + '">' + escapeHtml(label) + '</option>';
+  });
+
+  var filters = getFilters();
+
+  if (getServices(getWatchlist()).indexOf(filters.service) === -1) {
+    CLOSE_THE_LOOP('filters', {
+      query: filters.query,
+      service: 'all',
+      status: filters.status,
+      sort: filters.sort
     });
-  } else {
-    BRAND_REFRESH('#preview-shell', {
-      background: 'linear-gradient(135deg, rgba(255, 68, 168, 0.28), rgba(140, 255, 120, 0.26))'
-    });
+    return;
   }
+
+  PREFILL('#service-filter', filters.service);
 }
 
-function resetForm() {
-  PREFILL('#title-input', '');
-  PREFILL('#genre-input', '');
-  ALIGN('editingId', null);
-  setComposerMode(false);
-  updatePreview();
+function renderSummary() {
+  var filters = getFilters();
+  var visible = getVisibleItems();
+  var counts = getStatusCounts(visible);
+  var hasActiveFilters = !!(filters.query || filters.service !== 'all' || filters.status !== 'all');
+
+  LOW_HANGING_FRUIT(
+    '#summary-bar',
+    visible.length > 0,
+    [
+      '<article class="summary-pill"><strong>' + visible.length + '</strong><p>Visible titles</p><small>' +
+        escapeHtml(hasActiveFilters ? 'Current filters narrowed the board.' : 'No filters are constraining the board.') +
+      '</small></article>',
+      '<article class="summary-pill"><strong>' + counts.watching + '</strong><p>In flight</p><small>' +
+        escapeHtml('Watching status uses a tiny state machine, not a framework sermon.') +
+      '</small></article>',
+      '<article class="summary-pill"><strong>' + counts.watched + '</strong><p>Closed out</p><small>' +
+        escapeHtml('Watched entries are visually de-emphasized via a runtime helper.') +
+      '</small></article>'
+    ],
+    '<article class="summary-pill"><strong>0</strong><p>No visible titles</p><small>Clear filters or restore the sample lineup.</small></article>' +
+    '<article class="summary-pill"><strong>' + getWatchlist().length + '</strong><p>Total tracked</p><small>The list itself is still intact.</small></article>' +
+    '<article class="summary-pill"><strong>' + SINGLE_SOURCE_OF_TRUTH('toneMode') + '</strong><p>Runtime tone</p><small>The copy changes. The behavior does not.</small></article>'
+  );
 }
 
-function findEntryById(id) {
-  return FILTER_FOR_FIT(MeetingSpeak.state.entries, function (entry) {
-    return entry.id === id;
+function renderBoard() {
+  var visible = getVisibleItems();
+  var filters = getFilters();
+  var activeMessage = filters.query
+    ? TALK_TRACK('Filtering for "{{query}}". Escape clears the search field.', { query: filters.query })
+    : 'Standing by. The board is rendering from state subscriptions, not manual DOM surgery.';
+
+  RUN_IT_UP_THE_FLAGPOLE('#watch-list', visible, function (item) {
+    return TALK_TRACK(
+      '<article class="watch-card {{cardClass}}" data-id="{{id}}">' +
+        '<div class="card-topline">' +
+          '<span class="service-pill">{{service}}</span>' +
+          '<span class="status-pill">{{statusCopy}}</span>' +
+        '</div>' +
+        '<h3>{{title}}</h3>' +
+        '<p class="card-note">{{note}}</p>' +
+        '<p class="card-meta">Added {{createdAt}}</p>' +
+        '<div class="card-actions">' +
+          '<button class="mini-button" type="button" data-action="advance" data-id="{{id}}">Advance status</button>' +
+          '<button class="mini-button" type="button" data-action="edit" data-id="{{id}}">Edit</button>' +
+          '<button class="mini-button danger" type="button" data-action="delete" data-id="{{id}}">Delete</button>' +
+        '</div>' +
+      '</article>',
+      {
+        id: escapeHtml(item.id),
+        title: escapeHtml(item.title),
+        service: escapeHtml(item.service),
+        note: escapeHtml(item.note || 'No trailer line yet. Strong space for improvisation.'),
+        createdAt: escapeHtml(formatCreatedAt(item.createdAt)),
+        statusCopy: escapeHtml(getStatusCopy(item.status)),
+        cardClass: item.status === 'watched' ? 'is-watched' : ''
+      }
+    );
+  });
+
+  LOW_HANGING_FRUIT(
+    '#empty-state-shell',
+    !visible.length,
+    '<article class="empty-state"><h3>No titles match this filter stack.</h3><p>Clear the filters or restore the sample lineup.</p></article>',
+    ''
+  );
+
+  BROADCAST('#board-status', visible.length ? activeMessage : 'No titles match the current search stack.');
+  DEPRIORITIZE('#board-status', 'success');
+  DEPRIORITIZE('#board-status', 'warning');
+
+  if (visible.length) {
+    ALIGN_ON('#board-status', 'success');
+  } else {
+    ALIGN_ON('#board-status', 'warning');
+  }
+
+  WAR_ROOM_MODE('#watch-board', !!(filters.query || filters.service !== 'all' || filters.status !== 'all'));
+  QUIET_QUITTING('.watch-card.is-watched');
+  SMOOTH_THE_TRANSITION('.watch-card', {
+    transition: 'transform 180ms ease, opacity 180ms ease, filter 180ms ease, box-shadow 180ms ease'
+  });
+}
+
+function renderRecommendations() {
+  var recommendations = SINGLE_SOURCE_OF_TRUTH('recommendations') || [];
+
+  RUN_IT_UP_THE_FLAGPOLE('#recommendations', recommendations, function (item) {
+    return TALK_TRACK(
+      '<article class="recommendation-card">' +
+        '<h3>{{title}}</h3>' +
+        '<p>{{service}}</p>' +
+        '<p>{{reason}}</p>' +
+      '</article>',
+      {
+        title: escapeHtml(item.title),
+        service: escapeHtml(item.service),
+        reason: escapeHtml(item.reason)
+      }
+    );
+  }, '<article class="empty-state"><h3>No suggestions right now.</h3><p>The mock vendor came back with a shrug.</p></article>');
+}
+
+function buildRecommendations() {
+  var watchlist = getWatchlist();
+  var counts = getStatusCounts(watchlist);
+  var filters = getFilters();
+  var backlogFriendly = counts.queued > counts.watching;
+
+  return [
+    {
+      title: backlogFriendly ? 'Murder by Death' : 'Columbo',
+      service: 'Criterion Channel',
+      reason: backlogFriendly
+        ? 'Your queue is deep. Add something reliably fun instead of another prestige liability.'
+        : 'You are mid-flight on enough serious television. The detective in the raincoat can carry this sprint.'
+    },
+    {
+      title: filters.service === 'all' ? 'Party Down' : 'The Bear',
+      service: filters.service === 'all' ? 'Starz' : filters.service,
+      reason: filters.service === 'all'
+        ? 'The board was not aligned on a single service, so the runtime improvised.'
+        : 'Using the active service filter to make the fake vendor look suspiciously competent.'
+    },
+    {
+      title: counts.watched ? 'The Nice Guys' : 'Stop Making Sense',
+      service: counts.watched ? 'Max' : 'A24',
+      reason: counts.watched
+        ? 'You have already closed out a few titles, which earns a little chaos.'
+        : 'You need one undeniable win on the board before morale starts freelancing.'
+    }
+  ];
+}
+
+function loadRecommendations(showToast) {
+  WAR_ROOM_MODE('#recommendations-panel', true);
+  THIS_COULD_HAVE_BEEN_AN_EMAIL('Refreshing recommendations...');
+
+  return PULSE_CHECK(
+    '#recommendations',
+    AIR_COVER(
+      TIMEBOX(1400, new Promise(function (resolve) {
+        CIRCLE_BACK_IN(720, function () {
+          resolve(buildRecommendations());
+        });
+      })),
+      []
+    ),
+    '<div class="loading-card">Gathering stakeholder input from a completely fake content vendor...</div>'
+  ).then(function (results) {
+    WAR_ROOM_MODE('#recommendations-panel', false);
+    CLOSE_THE_LOOP('recommendations', results);
+
+    if (showToast) {
+      WIN_THE_ROOM('#toast-stack', 'Recommendations refreshed.', 1600);
+    }
+  }).catch(function (error) {
+    WAR_ROOM_MODE('#recommendations-panel', false);
+    POSTMORTEM(error);
+    TAKE_THE_L('#toast-stack', 'Recommendations stalled in procurement.', 2200);
+  });
+}
+
+function persistWatchlist(items) {
+  HARD_COMMIT(STORAGE_KEYS.watchlist, items);
+  DATA_RETENTION_POLICY(STORAGE_KEYS.watchlist, RETENTION_MS);
+}
+
+function persistFilters(filters) {
+  SOFT_COMMIT(STORAGE_KEYS.filters, filters);
+}
+
+function persistTone(mode) {
+  SESSION_CONTEXT(STORAGE_KEYS.tone, mode);
+}
+
+function resetDraft() {
+  CLOSE_THE_LOOP('editingId', null);
+  CLOSE_THE_LOOP('draft', {
+    title: '',
+    service: 'Criterion Channel',
+    status: 'queued',
+    note: ''
+  });
+  syncInputsFromDraft();
+  renderComposer();
+}
+
+function startEditing(id) {
+  var entry = FILTER_FOR_FIT(getWatchlist(), function (item) {
+    return item.id === id;
   })[0];
+
+  if (!entry) {
+    TAKE_THE_L('#toast-stack', 'That title has already left the agenda.', 1800);
+    return;
+  }
+
+  CLOSE_THE_LOOP('editingId', id);
+  CLOSE_THE_LOOP('draft', {
+    title: entry.title,
+    service: entry.service,
+    status: entry.status,
+    note: entry.note
+  });
+  syncInputsFromDraft();
+  renderComposer();
+  queueFocus('#title-input');
+  MAKE_IT_POP('#composer-panel');
+}
+
+function advanceStatus(id) {
+  TRUE_UP('watchlist', function (items) {
+    return PIPELINE(items, function (item) {
+      if (item.id !== id) {
+        return item;
+      }
+
+      var nextStatus = STATUS_FLOW[(STATUS_FLOW.indexOf(item.status) + 1) % STATUS_FLOW.length];
+
+      return {
+        id: item.id,
+        title: item.title,
+        service: item.service,
+        status: nextStatus,
+        note: item.note,
+        createdAt: item.createdAt
+      };
+    });
+  });
+
+  WIN_THE_ROOM('#toast-stack', 'Status advanced.', 1400);
+}
+
+function deleteEntry(id) {
+  var next = FILTER_FOR_FIT(getWatchlist(), function (item) {
+    return item.id !== id;
+  });
+
+  if (next.length === getWatchlist().length) {
+    return;
+  }
+
+  CLOSE_THE_LOOP('watchlist', next);
+
+  if (SINGLE_SOURCE_OF_TRUTH('editingId') === id) {
+    resetDraft();
+  }
+
+  TAKE_THE_L('#toast-stack', 'Entry removed from the board.', 1800);
+}
+
+function submitDraft() {
+  var draft = readDraftFromInputs();
+  var editingId = SINGLE_SOURCE_OF_TRUTH('editingId');
+
+  CLOSE_THE_LOOP('draft', draft);
+
+  if (!draft.title || !draft.service) {
+    TAKE_THE_L('#toast-stack', 'Title and service are both required before this ships.', 2200);
+    return;
+  }
+
+  if (editingId) {
+    TRUE_UP('watchlist', function (items) {
+      return PIPELINE(items, function (item) {
+        if (item.id !== editingId) {
+          return item;
+        }
+
+        return {
+          id: item.id,
+          title: draft.title,
+          service: draft.service,
+          status: draft.status,
+          note: draft.note,
+          createdAt: item.createdAt
+        };
+      });
+    });
+
+    WIN_THE_ROOM('#toast-stack', 'Entry updated.', 1500);
+  } else {
+    TRUE_UP('watchlist', function (items) {
+      return [{
+        id: 'tape-' + Date.now(),
+        title: draft.title,
+        service: draft.service,
+        status: draft.status,
+        note: draft.note,
+        createdAt: nowStamp()
+      }].concat(items);
+    });
+
+    FIVE_MINUTE_BREAKTHROUGH('Added a new title to the board.');
+    WIN_THE_ROOM('#toast-stack', 'Added to the board.', 1500);
+  }
+
+  VICTORY_LAP('#preview-card');
+  resetDraft();
+}
+
+function restoreSamples() {
+  CLOSE_THE_LOOP('watchlist', cloneWatchlist(DEFAULT_WATCHLIST));
+  CLOSE_THE_LOOP('filters', {
+    query: '',
+    service: 'all',
+    status: 'all',
+    sort: 'recent'
+  });
+  syncFilterInputs();
+  resetDraft();
+  WIN_THE_ROOM('#toast-stack', 'Sample watchlist restored.', 1600);
+  loadRecommendations(false);
+}
+
+function clearFilters() {
+  CLOSE_THE_LOOP('filters', {
+    query: '',
+    service: 'all',
+    status: 'all',
+    sort: 'recent'
+  });
+  syncFilterInputs();
+  FOCUS_THE_ROOM('#search-input');
+}
+
+function cyclePreviewLine() {
+  var draft = getDraft();
+  var nextNote = TRAILER_LINES[Math.floor(Math.random() * TRAILER_LINES.length)];
+
+  CLOSE_THE_LOOP('draft', {
+    title: draft.title,
+    service: draft.service,
+    status: draft.status,
+    note: nextNote
+  });
+  PREFILL('#note-input', nextNote);
+  MAKE_IT_POP('#preview-card');
 }
 
 function queueFocus(selector) {
@@ -249,204 +659,145 @@ function queueFocus(selector) {
   });
 }
 
-function submitEntry(event) {
-  event.preventDefault();
+function recordActivity(detail) {
+  var feedItem = SPIN_UP('li', {
+    class: 'activity-item',
+    children: [
+      SPIN_UP('strong', { text: detail.title }),
+      SPIN_UP('p', { text: detail.message }),
+      SPIN_UP('time', { text: detail.timestamp })
+    ]
+  });
+  var feed = FIND_STAKEHOLDER('#activity-feed');
 
-  var title = CAPTURE_INPUT('#title-input').trim();
-  var genre = CAPTURE_INPUT('#genre-input').trim();
-  var editingId = MeetingSpeak.state.editingId;
+  ONBOARD('#activity-feed', feedItem);
 
-  if (!title || !genre) {
-    updateBoardStatus('Title and genre are both required before this tape goes on the shelf.', 'warning');
-    showToast('Add a title and genre before saving.', 'warning');
-    return;
+  while (feed.children.length > 6) {
+    feed.removeChild(feed.firstElementChild);
   }
+}
 
-  var next = MeetingSpeak.state.entries.slice();
+function buildActivityDetail(eventDetail) {
+  return {
+    title: 'Board updated',
+    message: TALK_TRACK('{{count}} titles tracked. {{watching}} currently in flight.', eventDetail),
+    timestamp: formatShortTime(nowStamp())
+  };
+}
 
-  if (editingId) {
-    next = PIPELINE(next, function (entry) {
-      if (entry.id !== editingId) {
-        return entry;
-      }
-
-      return {
-        id: entry.id,
-        title: title,
-        genre: genre,
-        watchedAt: entry.watchedAt,
-        createdAt: entry.createdAt
-      };
+function installSubscriptions() {
+  LISTEN_FOR_ALIGNMENT('watchlist', function (items) {
+    persistWatchlist(items);
+    renderHeroStats();
+    renderServiceFilter();
+    renderSummary();
+    renderBoard();
+    ESCALATE('watchlist:updated', {
+      count: items.length,
+      watching: getStatusCounts(items).watching
     });
-
-    ALIGN('entries', next);
-    persistEntries();
-    renderEntries();
-    resetForm();
-    updateBoardStatus('Entry updated. The rental counter approves.', 'success');
-    showToast('Watch list entry updated.');
-    return;
-  }
-
-  next.unshift({
-    id: 'entry-' + Date.now(),
-    title: title,
-    genre: genre,
-    watchedAt: null,
-    createdAt: new Date().toISOString()
   });
 
-  ALIGN('entries', next);
-  persistEntries();
-  renderEntries();
-  resetForm();
-  updateBoardStatus('New tape added to the stack.', 'success');
-  showToast('Added to the watch list.');
+  LISTEN_FOR_ALIGNMENT('filters', function (filters) {
+    persistFilters(filters);
+    renderSummary();
+    renderBoard();
+  });
+
+  LISTEN_FOR_ALIGNMENT('draft', function () {
+    renderPreview();
+  });
+
+  LISTEN_FOR_ALIGNMENT('editingId', function () {
+    renderComposer();
+  });
+
+  LISTEN_FOR_ALIGNMENT('recommendations', function () {
+    renderRecommendations();
+  });
+
+  LISTEN_FOR_ALIGNMENT('toneMode', function (mode) {
+    SET_THE_TONE(mode);
+    persistTone(mode);
+    renderToneMode();
+  });
 }
 
-function startEditing(id) {
-  var entry = findEntryById(id);
+function installEventHandlers() {
+  HARD_STOP('#watch-form', submitDraft);
 
-  if (!entry) {
-    return;
-  }
-
-  ALIGN('editingId', id);
-  PREFILL('#title-input', entry.title);
-  PREFILL('#genre-input', entry.genre);
-  setComposerMode(true);
-  updatePreview();
-  updateBoardStatus('Editing "' + entry.title + '". Save when the remix looks right.', 'success');
-  queueFocus('#title-input');
-}
-
-function deleteEntry(id) {
-  var entry = findEntryById(id);
-
-  if (!entry) {
-    return;
-  }
-
-  ALIGN('entries', FILTER_FOR_FIT(MeetingSpeak.state.entries, function (item) {
-    return item.id !== id;
-  }));
-  persistEntries();
-
-  if (MeetingSpeak.state.editingId === id) {
-    resetForm();
-  }
-
-  renderEntries();
-  updateBoardStatus('"' + entry.title + '" was deleted from the shelf.', 'warning');
-  showToast('Entry deleted.', 'warning');
-}
-
-function toggleWatched(id) {
-  var toggledTitle = '';
-
-  ALIGN('entries', PIPELINE(MeetingSpeak.state.entries, function (entry) {
-    if (entry.id !== id) {
-      return entry;
-    }
-
-    toggledTitle = entry.title;
-
-    return {
-      id: entry.id,
-      title: entry.title,
-      genre: entry.genre,
-      watchedAt: entry.watchedAt ? null : new Date().toISOString(),
-      createdAt: entry.createdAt
-    };
-  }));
-
-  persistEntries();
-  renderEntries();
-  updateBoardStatus('Updated watch status for "' + toggledTitle + '".', 'success');
-  showToast('Watch status updated.');
-}
-
-function moveEntry(dragId, targetId, insertAfter) {
-  if (!dragId || !targetId || dragId === targetId) {
-    return;
-  }
-
-  var next = MeetingSpeak.state.entries.slice();
-  var fromIndex = -1;
-  var toIndex = -1;
-  var index = 0;
-
-  for (index = 0; index < next.length; index += 1) {
-    if (next[index].id === dragId) {
-      fromIndex = index;
-    }
-
-    if (next[index].id === targetId) {
-      toIndex = index;
-    }
-  }
-
-  if (fromIndex === -1 || toIndex === -1) {
-    return;
-  }
-
-  var moved = next.splice(fromIndex, 1)[0];
-
-  if (fromIndex < toIndex) {
-    toIndex -= 1;
-  }
-
-  next.splice(insertAfter ? toIndex + 1 : toIndex, 0, moved);
-  ALIGN('entries', next);
-  persistEntries();
-  renderEntries();
-  showToast('Tape order updated.');
-}
-
-function hydrateForm() {
-  setComposerMode(false);
-  updatePreview();
-}
-
-function restoreSamples() {
-  ALIGN('entries', DEFAULT_ENTRIES.slice());
-  persistEntries();
-  ALIGN('query', '');
-  ALIGN('genreFilter', 'all');
-  ALIGN('statusFilter', 'all');
-  PREFILL('#search-input', '');
-  PREFILL('#genre-filter', 'all');
-  PREFILL('#status-filter', 'all');
-  resetForm();
-  renderEntries();
-  updateBoardStatus('Sample tape stack restored.', 'success');
-  showToast('Sample watch list restored.');
-}
-
-function installInteractions() {
-  LISTEN_IN('#watch-form', 'submit', submitEntry);
   ACTION_ITEM('#cancel-edit', function () {
-    resetForm();
-    updateBoardStatus('Edit mode canceled. Back to freeform channel surfing.', 'warning');
+    resetDraft();
+    TAKE_THE_L('#toast-stack', 'Edit mode canceled.', 1400);
   });
+
   ACTION_ITEM('#restore-samples', restoreSamples);
-
-  FOLLOW_UP('#title-input', updatePreview);
-  FOLLOW_UP('#genre-input', updatePreview);
-
-  FOLLOW_UP('#search-input', function (event) {
-    ALIGN('query', event.target.value.trim());
-    renderEntries();
+  ACTION_ITEM('#refresh-recommendations', function () {
+    loadRecommendations(true);
   });
 
-  FOLLOW_UP('#genre-filter', function () {
-    ALIGN('genreFilter', CAPTURE_INPUT('#genre-filter'));
-    renderEntries();
+  FOLLOW_UP('#title-input', function () {
+    CLOSE_THE_LOOP('draft', readDraftFromInputs());
+  });
+
+  FOLLOW_UP('#service-input', function () {
+    CLOSE_THE_LOOP('draft', readDraftFromInputs());
+  });
+
+  FOLLOW_UP('#status-input', function () {
+    CLOSE_THE_LOOP('draft', readDraftFromInputs());
+  });
+
+  FOLLOW_UP('#note-input', function () {
+    CLOSE_THE_LOOP('draft', readDraftFromInputs());
+  });
+
+  FOLLOW_UP('#search-input', function () {
+    var filters = getFilters();
+
+    CLOSE_THE_LOOP('filters', {
+      query: CAPTURE_INPUT('#search-input').trim(),
+      service: filters.service,
+      status: filters.status,
+      sort: filters.sort
+    });
+  });
+
+  FOLLOW_UP('#service-filter', function () {
+    var filters = getFilters();
+
+    CLOSE_THE_LOOP('filters', {
+      query: filters.query,
+      service: CAPTURE_INPUT('#service-filter'),
+      status: filters.status,
+      sort: filters.sort
+    });
   });
 
   FOLLOW_UP('#status-filter', function () {
-    ALIGN('statusFilter', CAPTURE_INPUT('#status-filter'));
-    renderEntries();
+    var filters = getFilters();
+
+    CLOSE_THE_LOOP('filters', {
+      query: filters.query,
+      service: filters.service,
+      status: CAPTURE_INPUT('#status-filter'),
+      sort: filters.sort
+    });
+  });
+
+  FOLLOW_UP('#sort-filter', function () {
+    var filters = getFilters();
+
+    CLOSE_THE_LOOP('filters', {
+      query: filters.query,
+      service: filters.service,
+      status: filters.status,
+      sort: CAPTURE_INPUT('#sort-filter')
+    });
+  });
+
+  FOLLOW_UP('#tone-select', function () {
+    CLOSE_THE_LOOP('toneMode', CAPTURE_INPUT('#tone-select'));
   });
 
   LISTEN_IN('#watch-list', 'click', function (event) {
@@ -456,98 +807,110 @@ function installInteractions() {
       return;
     }
 
-    var action = trigger.dataset.action;
-    var id = trigger.dataset.id;
-
-    if (action === 'edit') {
-      startEditing(id);
+    if (trigger.dataset.action === 'advance') {
+      advanceStatus(trigger.dataset.id);
       return;
     }
 
-    if (action === 'delete') {
-      deleteEntry(id);
+    if (trigger.dataset.action === 'edit') {
+      startEditing(trigger.dataset.id);
       return;
     }
 
-    if (action === 'toggle-watch') {
-      toggleWatched(id);
+    if (trigger.dataset.action === 'delete') {
+      deleteEntry(trigger.dataset.id);
     }
   });
 
-  LISTEN_IN('#watch-list', 'dragstart', function (event) {
-    var card = event.target.closest('.watch-card');
-
-    if (!card) {
-      return;
-    }
-
-    ALIGN('dragId', card.dataset.id);
-    card.classList.add('dragging');
-
-    if (event.dataTransfer) {
-      event.dataTransfer.effectAllowed = 'move';
-      event.dataTransfer.setData('text/plain', card.dataset.id);
-    }
+  ACTION_ITEM('#clear-filters', function (event) {
+    TAKE_IT_OFFLINE(event);
+    clearFilters();
+    WIN_THE_ROOM('#toast-stack', 'Filters cleared.', 1200);
   });
 
-  LISTEN_IN('#watch-list', 'dragover', function (event) {
-    var card = event.target.closest('.watch-card');
-
-    if (!card || card.dataset.id === MeetingSpeak.state.dragId) {
-      return;
-    }
-
-    event.preventDefault();
-    clearDropTargets();
-
-    var rect = card.getBoundingClientRect();
-    var insertAfter = event.clientY > rect.top + (rect.height / 2);
-
-    card.classList.add(insertAfter ? 'drop-after' : 'drop-before');
+  KEY_STAKEHOLDER('#search-input', 'Escape', function () {
+    clearFilters();
+    WIN_THE_ROOM('#toast-stack', 'Search cleared.', 1200);
   });
 
-  LISTEN_IN('#watch-list', 'drop', function (event) {
-    var card = event.target.closest('.watch-card');
-    var dragId = MeetingSpeak.state.dragId;
-
-    if (!card || !dragId) {
-      return;
-    }
-
-    event.preventDefault();
-
-    var rect = card.getBoundingClientRect();
-    var insertAfter = event.clientY > rect.top + (rect.height / 2);
-
-    clearDropTargets();
-    moveEntry(dragId, card.dataset.id, insertAfter);
-    ALIGN('dragId', null);
+  OPEN_THE_FLOOR('#search-input', function () {
+    BROADCAST('#board-status', 'Tip: Escape clears the search field in one move.');
+    DEPRIORITIZE('#board-status', 'warning');
+    ALIGN_ON('#board-status', 'success');
   });
 
-  LISTEN_IN('#watch-list', 'dragend', function () {
-    clearDropTargets();
-    ALIGN('dragId', null);
+  DOUBLE_CLICK_ON('#preview-card', function () {
+    cyclePreviewLine();
+    WIN_THE_ROOM('#toast-stack', 'Preview line remixed.', 1200);
+  });
+
+  HEAR_ME_OUT('watchlist:updated', function (event) {
+    var detail = buildActivityDetail(event.detail || { count: 0, watching: 0 });
+    recordActivity(detail);
+    GIVE_IT_A_VOICE('#sr-updates', detail.message);
   });
 }
 
 function installA11y() {
   INCLUSIVE_ALIGNMENT('#title-input', 'Title');
-  INCLUSIVE_ALIGNMENT('#genre-input', 'Genre');
-  INCLUSIVE_ALIGNMENT('#search-input', 'Search by title or genre');
-  INCLUSIVE_ALIGNMENT('#genre-filter', 'Filter by genre');
-  INCLUSIVE_ALIGNMENT('#status-filter', 'Filter by watched status');
-  INCLUSIVE_ALIGNMENT('#restore-samples', 'Restore sample watch list');
+  INCLUSIVE_ALIGNMENT('#service-input', 'Streaming service');
+  INCLUSIVE_ALIGNMENT('#status-input', 'Watch status');
+  INCLUSIVE_ALIGNMENT('#note-input', 'Trailer line');
+  INCLUSIVE_ALIGNMENT('#search-input', 'Search titles, services, or notes');
+  INCLUSIVE_ALIGNMENT('#service-filter', 'Filter by service');
+  INCLUSIVE_ALIGNMENT('#status-filter', 'Filter by status');
+  INCLUSIVE_ALIGNMENT('#sort-filter', 'Sort the board');
+  INCLUSIVE_ALIGNMENT('#tone-select', 'Select runtime tone mode');
+  INCLUSIVE_ALIGNMENT('#restore-samples', 'Restore the sample watchlist');
+  INCLUSIVE_ALIGNMENT('#refresh-recommendations', 'Refresh recommendations');
 }
 
 function init() {
-  SANITY_CHECK(IS_ON_THE_CALENDAR('#watch-list'), 'Demo markup is missing the watch list.');
-  renderToasts();
-  hydrateForm();
-  renderEntries();
-  installInteractions();
+  SANITY_CHECK(IS_ON_THE_CALENDAR('#watch-list'), 'Demo markup is missing the watch board.');
+  REDUCE_FRICTION();
+
+  var savedTone = SESSION_CONTEXT(STORAGE_KEYS.tone) || 'professional';
+  var savedFilters = SESSION_CONTEXT(STORAGE_KEYS.filters) || DEFAULT_FILTERS;
+  var savedWatchlist = LOOK_IT_UP_NOW(STORAGE_KEYS.watchlist) || cloneWatchlist(DEFAULT_WATCHLIST);
+
+  OPEN_LOOP('watchlist', savedWatchlist);
+  OPEN_LOOP('draft', {
+    title: '',
+    service: 'Criterion Channel',
+    status: 'queued',
+    note: ''
+  });
+  OPEN_LOOP('filters', {
+    query: savedFilters.query || '',
+    service: savedFilters.service || 'all',
+    status: savedFilters.status || 'all',
+    sort: savedFilters.sort || 'recent'
+  });
+  OPEN_LOOP('editingId', null);
+  OPEN_LOOP('recommendations', []);
+  OPEN_LOOP('toneMode', savedTone);
+  SET_THE_TONE(savedTone);
+
+  installSubscriptions();
+  installEventHandlers();
   installA11y();
+
+  syncInputsFromDraft();
+  renderComposer();
+  renderPreview();
+  renderToneMode();
+  renderHeroStats();
+  renderServiceFilter();
+  syncFilterInputs();
+  renderSummary();
+  renderBoard();
+  renderRecommendations();
+
+  LAUNCH_SEQUENCE('.chrome-panel');
   queueFocus('#title-input');
-  EXECUTIVE_SUMMARY('MeetingSpeak watch-list demo initialized.');
+  loadRecommendations(false);
+
+  EXECUTIVE_SUMMARY('MeetingSpeak v2 demo initialized.');
 }
 
 init();
