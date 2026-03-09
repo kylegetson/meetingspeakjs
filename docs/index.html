@@ -7,89 +7,108 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div class="ambient ambient-left" aria-hidden="true"></div>
-    <div class="ambient ambient-right" aria-hidden="true"></div>
-
     <header class="docs-topbar">
-      <a class="brand" href="./index.html">MeetingSpeak</a>
+      <a class="brand" href="./index.html">MeetingSpeak.js</a>
       <nav class="docs-nav" aria-label="Primary">
         <a href="../demo/index.html">Demo</a>
-        <a href="#quick-start">Quick start</a>
-        <a href="#api-reference">API</a>
+        <a class="jump-link" href="#quick-start">Quick start</a>
+        <a class="jump-link" href="#api-reference">API</a>
+        <a href="../MeetingSpeak.js">Runtime</a>
       </nav>
     </header>
 
     <div class="docs-shell">
-      <aside class="sidebar panel">
+      <aside class="sidebar">
         <p class="sidebar-label">Documentation</p>
         <h1>MeetingSpeak</h1>
         <p class="sidebar-copy">
-          A browser-first JavaScript runtime DSL that maps polished corporate jargon
-          onto normal browser behavior.
+          Browser-first runtime DSL for DOM work, events, storage, async behavior, and accessibility.
         </p>
 
+        <dl class="sidebar-meta">
+          <div>
+            <dt>Format</dt>
+            <dd>Single script file</dd>
+          </div>
+          <div>
+            <dt>Scope</dt>
+            <dd>Browser runtime only</dd>
+          </div>
+          <div>
+            <dt>Build step</dt>
+            <dd>None required</dd>
+          </div>
+        </dl>
+
         <nav class="section-nav" aria-label="Sections">
-          <a href="#why">Why</a>
-          <a href="#quick-start">Quick start</a>
-          <a href="#installation">Installation</a>
-          <a href="#concepts">Core concepts</a>
-          <a href="#examples">Examples</a>
-          <a href="#api-reference">API reference</a>
-          <a href="#philosophy">Philosophy</a>
-          <a href="#roadmap">Roadmap</a>
-          <a href="#limitations">Limitations</a>
+          <a id="nav-overview" class="jump-link docs-link" href="#overview">Overview</a>
+          <a id="nav-why" class="jump-link docs-link" href="#why">Why</a>
+          <a id="nav-quick-start" class="jump-link docs-link" href="#quick-start">Quick start</a>
+          <a id="nav-installation" class="jump-link docs-link" href="#installation">Installation</a>
+          <a id="nav-concepts" class="jump-link docs-link" href="#concepts">Core concepts</a>
+          <a id="nav-examples" class="jump-link docs-link" href="#examples">Examples</a>
+          <a id="nav-api-reference" class="jump-link docs-link" href="#api-reference">API reference</a>
+          <a id="nav-philosophy" class="jump-link docs-link" href="#philosophy">Philosophy</a>
+          <a id="nav-roadmap" class="jump-link docs-link" href="#roadmap">Roadmap</a>
+          <a id="nav-limitations" class="jump-link docs-link" href="#limitations">Limitations</a>
         </nav>
       </aside>
 
       <main class="content">
-        <section class="hero panel">
-          <div>
-            <p class="eyebrow">v1 runtime</p>
-            <h2>Funny names, real browser APIs, no build step.</h2>
-            <p class="lede">
-              MeetingSpeak is not a compiler or framework. It is a single browser script
-              that exposes a coherent DSL for DOM work, events, storage, async behavior,
-              and accessibility.
-            </p>
-            <div class="hero-actions">
-              <a class="button button-primary" href="../demo/index.html">Open demo</a>
-              <a class="button button-secondary" href="../MeetingSpeak.js">View runtime</a>
-            </div>
-          </div>
-          <div class="hero-card">
-            <p class="code-label">One-liner</p>
-            <pre><code>BROADCAST('#status', 'We are aligned.')</code></pre>
-            <p class="hero-note">Equivalent to setting <code>textContent</code> on the matched element.</p>
-          </div>
-        </section>
-
-        <section id="why" class="panel section">
-          <p class="eyebrow">Why this exists</p>
-          <h2>A runtime joke works better than a fake language that cannot ship.</h2>
-          <p>
-            The concept lands because the code actually runs. You can drop one script tag
-            into a static page, write UI logic in MeetingSpeak terminology, and still debug
-            normal browser behavior underneath.
+        <section id="overview" class="doc-section intro-section">
+          <p class="eyebrow">Overview</p>
+          <h2>Funny API names over normal browser behavior.</h2>
+          <p class="lede">
+            MeetingSpeak is a one-file JavaScript runtime. It does not compile anything, invent a renderer,
+            or require a build pipeline. It wraps common browser APIs in intentionally ridiculous business jargon.
           </p>
-          <div class="two-up">
-            <article class="info-card">
+
+          <div class="summary-grid">
+            <article class="summary-card">
               <h3>What it is</h3>
-              <p>A thin wrapper layer over selectors, events, storage, fetch, timers, and ARIA helpers.</p>
+              <p>A thin runtime layer over selectors, events, storage, fetch, timers, and ARIA helpers.</p>
             </article>
-            <article class="info-card">
+            <article class="summary-card">
               <h3>What it is not</h3>
-              <p>A parser, compiler, component system, template engine, or state framework.</p>
+              <p>A parser, framework, component system, template engine, or reactive state library.</p>
             </article>
+          </div>
+
+          <div class="snippet-block">
+            <div class="snippet-heading">
+              <div>
+                <p class="mini-label">Runtime include</p>
+                <h3>Load one script tag and start using globals.</h3>
+              </div>
+              <button id="copy-install" type="button" class="button button-ghost">Copy</button>
+            </div>
+            <pre><code id="install-snippet">&lt;script src="MeetingSpeak.js"&gt;&lt;/script&gt;</code></pre>
           </div>
         </section>
 
-        <section id="quick-start" class="panel section">
-          <p class="eyebrow">Quick start</p>
-          <h2>Open a plain HTML file and use the globals directly.</h2>
+        <section id="why" class="doc-section">
+          <p class="eyebrow">Why</p>
+          <h2>A runtime joke ships better than a fake language demo.</h2>
+          <p>
+            The concept works because the code actually runs in a browser. You can inspect it,
+            debug it with normal tooling, and still keep the joke intact because the weirdness
+            lives in the API names rather than in magical behavior.
+          </p>
+        </section>
+
+        <section id="quick-start" class="doc-section">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Quick start</p>
+              <h2>Open a plain HTML file and call the runtime directly.</h2>
+            </div>
+            <button id="copy-quickstart" type="button" class="button button-ghost">Copy snippet</button>
+          </div>
+
           <div class="code-grid">
             <article class="code-card">
-              <h3>HTML</h3>
-              <pre><code>&lt;div id="status"&gt;&lt;/div&gt;
+              <h3>MeetingSpeak</h3>
+              <pre><code id="quickstart-snippet">&lt;div id="status"&gt;&lt;/div&gt;
 &lt;button id="save"&gt;Save&lt;/button&gt;
 &lt;script src="MeetingSpeak.js"&gt;&lt;/script&gt;
 &lt;script&gt;
@@ -99,8 +118,9 @@
   })
 &lt;/script&gt;</code></pre>
             </article>
+
             <article class="code-card">
-              <h3>Equivalent JavaScript</h3>
+              <h3>Equivalent browser JavaScript</h3>
               <pre><code>const status = document.querySelector('#status')
 const save = document.querySelector('#save')
 
@@ -113,80 +133,88 @@ save.addEventListener('click', () =&gt; {
           </div>
         </section>
 
-        <section id="installation" class="panel section">
+        <section id="installation" class="doc-section">
           <p class="eyebrow">Installation</p>
-          <h2>Script tag only.</h2>
-          <pre><code>&lt;script src="MeetingSpeak.js"&gt;&lt;/script&gt;</code></pre>
+          <h2>Use a script tag. That is the whole setup story.</h2>
+          <pre><code>./MeetingSpeak.js
+./docs/index.html
+./demo/index.html</code></pre>
           <p>
-            You can call functions globally, which is the intended joke, or use the safer namespace:
+            Functions are exposed globally by design, but the namespace is available too:
             <code>MeetingSpeak.BROADCAST('#status', 'Ready')</code>.
           </p>
         </section>
 
-        <section id="concepts" class="panel section">
+        <section id="concepts" class="doc-section">
           <p class="eyebrow">Core concepts</p>
-          <h2>Selector-first, callback-last, browser-native behavior.</h2>
-          <div class="two-up">
-            <article class="info-card">
+          <h2>Selector-first, callback-last, browser-native semantics.</h2>
+          <div class="summary-grid summary-grid-quad">
+            <article class="summary-card">
               <h3>Thin wrappers</h3>
-              <p>Each API maps cleanly onto familiar browser calls like <code>querySelector</code> or <code>fetch</code>.</p>
+              <p>Most functions are direct wrappers over `querySelector`, `fetch`, timers, or localStorage.</p>
             </article>
-            <article class="info-card">
-              <h3>Predictable errors</h3>
-              <p>Missing selectors and invalid arguments throw readable developer errors.</p>
+            <article class="summary-card">
+              <h3>Readable failure</h3>
+              <p>Missing selectors and bad inputs throw explicit runtime errors instead of failing silently.</p>
             </article>
-            <article class="info-card">
-              <h3>No reactivity</h3>
-              <p><code>SOURCE_OF_TRUTH</code> stores values in a plain object. Updates do not render automatically.</p>
+            <article class="summary-card">
+              <h3>Plain state</h3>
+              <p>`SOURCE_OF_TRUTH` stores values in a normal object. Nothing rerenders until you do it yourself.</p>
             </article>
-            <article class="info-card">
-              <h3>Browser runtime DSL</h3>
-              <p>Today this is just JavaScript with a themed API surface. A parser could come later.</p>
+            <article class="summary-card">
+              <h3>No compiler</h3>
+              <p>The current project is JavaScript with themed function names, not a standalone language parser.</p>
             </article>
           </div>
         </section>
 
-        <section id="examples" class="panel section">
-          <p class="eyebrow">Runnable examples</p>
-          <h2>Use MeetingSpeak on the docs page itself.</h2>
+        <section id="examples" class="doc-section">
+          <p class="eyebrow">Examples</p>
+          <h2>These examples are wired on this page with MeetingSpeak itself.</h2>
 
-          <div class="interactive-grid">
+          <div class="examples-grid">
             <article class="playground">
               <div class="playground-header">
-                <h3>Live preview form</h3>
-                <p>Powered by <code>FOLLOW_UP</code> and <code>BROADCAST</code>.</p>
+                <h3>Live preview</h3>
+                <p>Uses <code>FOLLOW_UP</code>, <code>BROADCAST</code>, and local storage persistence.</p>
               </div>
+
               <label class="field">
                 <span>Headline</span>
                 <input id="docs-headline" type="text" value="Quarterly alignment achieved." />
               </label>
+
               <div id="docs-preview" class="preview-panel">Quarterly alignment achieved.</div>
             </article>
 
             <article class="playground">
               <div class="playground-header">
-                <h3>Status example</h3>
-                <p>Runs DOM updates, class changes, timers, and live announcements.</p>
+                <h3>Status banner</h3>
+                <p>Uses <code>ACTION_ITEM</code>, <code>ALIGN_ON</code>, <code>DEPRIORITIZE</code>, and <code>GIVE_IT_A_VOICE</code>.</p>
               </div>
+
               <div id="docs-status" class="status-banner">Standing by.</div>
+
               <div class="button-row">
-                <button id="run-success" class="button button-primary">Run success</button>
-                <button id="run-warning" class="button button-secondary">Run warning</button>
+                <button id="run-success" type="button" class="button button-primary">Run success</button>
+                <button id="run-warning" type="button" class="button button-secondary">Run warning</button>
               </div>
             </article>
           </div>
 
-          <article class="playground large-playground">
+          <article class="playground comparison-playground">
             <div class="playground-header">
-              <h3>Plain JS comparison</h3>
-              <p>Switch between the MeetingSpeak version and the direct browser equivalent.</p>
+              <h3>Code comparison</h3>
+              <p>Switch between the MeetingSpeak version and the plain browser equivalent.</p>
             </div>
 
             <div class="button-row">
-              <button id="show-meetingspeak" class="button button-primary">MeetingSpeak</button>
-              <button id="show-javascript" class="button button-ghost">JavaScript</button>
+              <button id="show-meetingspeak" type="button" class="button button-primary">MeetingSpeak</button>
+              <button id="show-javascript" type="button" class="button button-ghost">JavaScript</button>
+              <button id="copy-comparison" type="button" class="button button-ghost">Copy current</button>
             </div>
 
+            <p id="comparison-caption" class="comparison-caption">Showing the MeetingSpeak version.</p>
             <pre id="comparison-code" class="comparison-panel"><code>ACTION_ITEM('#save', () =&gt; {
   const draft = CAPTURE_INPUT('#editor')
   INSTITUTIONAL_KNOWLEDGE('draft', draft)
@@ -195,7 +223,7 @@ save.addEventListener('click', () =&gt; {
           </article>
         </section>
 
-        <section id="api-reference" class="panel section">
+        <section id="api-reference" class="doc-section">
           <div class="section-heading">
             <div>
               <p class="eyebrow">API reference</p>
@@ -203,12 +231,17 @@ save.addEventListener('click', () =&gt; {
             </div>
             <label class="field compact-field">
               <span>Filter API</span>
-              <input id="api-search" type="search" placeholder="Search for storage, events, focus..." />
+              <input id="api-search" type="search" placeholder="Search storage, events, focus..." />
             </label>
           </div>
 
+          <p id="api-summary" class="api-summary">Showing all groups.</p>
+          <div id="api-empty" class="empty-state" hidden>
+            <p>No API groups match that filter.</p>
+          </div>
+
           <div id="api-groups" class="api-groups">
-            <article class="api-group" data-keywords="dom selection text value">
+            <article id="api-group-dom-selection" class="api-group" data-keywords="dom selection text value">
               <h3>DOM selection</h3>
               <ul>
                 <li><code>FIND_STAKEHOLDER(selector)</code> returns the first match.</li>
@@ -219,7 +252,7 @@ save.addEventListener('click', () =&gt; {
               </ul>
             </article>
 
-            <article class="api-group" data-keywords="dom updates html text append remove scroll">
+            <article id="api-group-dom-updates" class="api-group" data-keywords="dom updates html text append remove scroll">
               <h3>DOM updates</h3>
               <ul>
                 <li><code>ORG_UPDATE(selector, html)</code> sets <code>innerHTML</code>.</li>
@@ -230,7 +263,7 @@ save.addEventListener('click', () =&gt; {
               </ul>
             </article>
 
-            <article class="api-group" data-keywords="class style show hide">
+            <article id="api-group-styles" class="api-group" data-keywords="class style show hide">
               <h3>Styles and classes</h3>
               <ul>
                 <li><code>ALIGN_ON(selector, className)</code> adds a class.</li>
@@ -241,7 +274,7 @@ save.addEventListener('click', () =&gt; {
               </ul>
             </article>
 
-            <article class="api-group" data-keywords="forms attributes metadata input checkbox value disabled">
+            <article id="api-group-forms" class="api-group" data-keywords="forms attributes metadata input checkbox value disabled">
               <h3>Forms and attributes</h3>
               <ul>
                 <li><code>CAPTURE_INPUT(selector)</code> returns <code>value</code>.</li>
@@ -252,7 +285,7 @@ save.addEventListener('click', () =&gt; {
               </ul>
             </article>
 
-            <article class="api-group" data-keywords="events click input custom event listener">
+            <article id="api-group-events" class="api-group" data-keywords="events click input custom event listener">
               <h3>Events</h3>
               <ul>
                 <li><code>LISTEN_IN(selector, eventName, handler)</code> attaches a listener.</li>
@@ -262,7 +295,7 @@ save.addEventListener('click', () =&gt; {
               </ul>
             </article>
 
-            <article class="api-group" data-keywords="state utility normalize math string">
+            <article id="api-group-state" class="api-group" data-keywords="state utility normalize math string">
               <h3>State and utility</h3>
               <ul>
                 <li><code>SOURCE_OF_TRUTH(name, value)</code> stores a value in the runtime state object.</li>
@@ -272,7 +305,7 @@ save.addEventListener('click', () =&gt; {
               </ul>
             </article>
 
-            <article class="api-group" data-keywords="collections map filter reduce sort arrays">
+            <article id="api-group-collections" class="api-group" data-keywords="collections map filter reduce sort arrays">
               <h3>Collections</h3>
               <ul>
                 <li><code>PIPELINE(items, fn)</code> maps items.</li>
@@ -282,7 +315,7 @@ save.addEventListener('click', () =&gt; {
               </ul>
             </article>
 
-            <article class="api-group" data-keywords="async timeout interval promise scheduling">
+            <article id="api-group-async" class="api-group" data-keywords="async timeout interval promise scheduling">
               <h3>Async and scheduling</h3>
               <ul>
                 <li><code>CIRCLE_BACK_IN(ms, fn)</code> wraps <code>setTimeout</code>.</li>
@@ -293,7 +326,7 @@ save.addEventListener('click', () =&gt; {
               </ul>
             </article>
 
-            <article class="api-group" data-keywords="network fetch json post http">
+            <article id="api-group-network" class="api-group" data-keywords="network fetch json post http">
               <h3>Network</h3>
               <ul>
                 <li><code>OUTREACH(url, options)</code> is a thin <code>fetch</code> wrapper.</li>
@@ -302,7 +335,7 @@ save.addEventListener('click', () =&gt; {
               </ul>
             </article>
 
-            <article class="api-group" data-keywords="storage localstorage persistence">
+            <article id="api-group-storage" class="api-group" data-keywords="storage localstorage persistence">
               <h3>Storage</h3>
               <ul>
                 <li><code>INSTITUTIONAL_KNOWLEDGE(key, value)</code> serializes to <code>localStorage</code>.</li>
@@ -311,7 +344,7 @@ save.addEventListener('click', () =&gt; {
               </ul>
             </article>
 
-            <article class="api-group" data-keywords="logging console assert warn error">
+            <article id="api-group-logging" class="api-group" data-keywords="logging console assert warn error">
               <h3>Logging and debugging</h3>
               <ul>
                 <li><code>EXECUTIVE_SUMMARY(...args)</code> logs.</li>
@@ -321,7 +354,7 @@ save.addEventListener('click', () =&gt; {
               </ul>
             </article>
 
-            <article class="api-group" data-keywords="focus aria accessibility live region label">
+            <article id="api-group-accessibility" class="api-group" data-keywords="focus aria accessibility live region label">
               <h3>Accessibility</h3>
               <ul>
                 <li><code>FOCUS_THE_ROOM(selector)</code> moves focus.</li>
@@ -332,34 +365,33 @@ save.addEventListener('click', () =&gt; {
           </div>
         </section>
 
-        <section id="philosophy" class="panel section">
-          <p class="eyebrow">Design philosophy</p>
-          <h2>The joke lives in the names, not the semantics.</h2>
+        <section id="philosophy" class="doc-section">
+          <p class="eyebrow">Philosophy</p>
+          <h2>The joke is in the names, not in hidden semantics.</h2>
           <p>
-            MeetingSpeak stays useful because it refuses to become magical. It does not hide
-            normal browser rules, invent a rendering layer, or attempt to replace JavaScript.
-            The theme is decorative; the behavior is straightforward.
+            MeetingSpeak stays readable because it does not try to outsmart the platform.
+            Underneath the themed function names, browser behavior stays ordinary and debuggable.
           </p>
         </section>
 
-        <section id="roadmap" class="panel section">
+        <section id="roadmap" class="doc-section">
           <p class="eyebrow">Roadmap</p>
-          <h2>Parser later, runtime first.</h2>
-          <ul class="roadmap-list">
-            <li>v1 keeps the project as a browser runtime DSL.</li>
-            <li>v1.5 could add stronger debug modes and a few small helpers.</li>
-            <li>v2 could introduce a parser and transpiler for standalone MeetingSpeak source files.</li>
+          <h2>Runtime first, parser later if it is still funny.</h2>
+          <ul class="doc-list">
+            <li>v1 remains a browser runtime DSL.</li>
+            <li>v1.5 could add more debug affordances and a few helper functions.</li>
+            <li>v2 could explore a parser and transpiler for standalone MeetingSpeak source.</li>
           </ul>
         </section>
 
-        <section id="limitations" class="panel section">
+        <section id="limitations" class="doc-section">
           <p class="eyebrow">Limitations</p>
-          <h2>Intentional boundaries keep the library readable.</h2>
-          <ul class="roadmap-list">
-            <li>No build tooling, bundler integration, or module packaging is included here.</li>
-            <li>No reactive state system or templating engine exists in v1.</li>
-            <li>Network helpers are still just wrappers around <code>fetch</code>.</li>
-            <li>This is currently a browser runtime DSL, not a standalone language.</li>
+          <h2>Intentional boundaries keep the project understandable.</h2>
+          <ul class="doc-list">
+            <li>No build tooling or module packaging is part of this project today.</li>
+            <li>No reactive rendering system or template engine exists in v1.</li>
+            <li>Network helpers are convenience wrappers, not a full client abstraction.</li>
+            <li>This is a browser runtime DSL, not a standalone language.</li>
           </ul>
         </section>
       </main>

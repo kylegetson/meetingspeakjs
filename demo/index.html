@@ -3,188 +3,111 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>MeetingSpeak Demo</title>
+    <title>MeetingSpeak Demo VHS Vault</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div class="page-glow page-glow-left" aria-hidden="true"></div>
-    <div class="page-glow page-glow-right" aria-hidden="true"></div>
+    <div class="grid-wash" aria-hidden="true"></div>
+    <div class="orb orb-left" aria-hidden="true"></div>
+    <div class="orb orb-right" aria-hidden="true"></div>
 
     <header class="topbar">
-      <a class="brand" href="../docs/index.html">MeetingSpeak</a>
+      <a class="brand" href="../docs/index.html">MeetingSpeak.js</a>
       <nav class="topnav" aria-label="Demo navigation">
         <a href="../docs/index.html">Docs</a>
-        <a href="#initiative-board">Board</a>
+        <a href="#watch-board">Watch List</a>
       </nav>
     </header>
 
-    <main class="layout">
-      <section class="hero panel">
-        <div class="hero-copy">
-          <p class="eyebrow">Browser runtime DSL</p>
-          <h1>MeetingSpeak runs a real interface without pretending to be a framework.</h1>
-          <p class="lede">
-            This demo uses the v1 API to manage notes, cards, search, local persistence,
-            status messaging, and an async sync flow directly in the browser.
-          </p>
-          <div class="hero-actions">
-            <button id="jump-to-board" class="button button-primary">Review pipeline</button>
-            <button id="simulate-sync" class="button button-secondary">Run async sync</button>
-          </div>
-        </div>
-        <div class="hero-metrics">
-          <article class="metric-card">
-            <span>Total initiatives</span>
-            <strong id="metric-total">0</strong>
-          </article>
-          <article class="metric-card">
-            <span>Visible after filters</span>
-            <strong id="metric-visible">0</strong>
-          </article>
-          <article class="metric-card">
-            <span>Saved notes</span>
-            <strong id="metric-saved">0</strong>
-          </article>
-          <article class="metric-card">
-            <span>Last sync</span>
-            <strong id="metric-last-sync">Not run yet</strong>
-          </article>
-        </div>
-      </section>
-
-      <div class="content-grid">
-        <section id="initiative-board" class="panel board-panel">
-          <div class="section-heading">
-            <div>
-              <p class="eyebrow">Initiative board</p>
-              <h2>Track work, filter noise, and keep the source of truth local.</h2>
-            </div>
-            <button id="seed-data" class="button button-secondary">Restore sample data</button>
-          </div>
-
-          <div class="board-grid">
-            <form id="initiative-form" class="card compose-card">
-              <div class="card-header">
-                <h3>Launch a new initiative</h3>
-                <p>Everything below is persisted with localStorage.</p>
+    <main class="shell">
+      <section class="app-grid">
+        <aside class="sidebar-stack">
+          <section id="composer-panel" class="chrome-panel sidebar-panel">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Rental counter</p>
+                <h2 id="composer-kicker">Tape something new</h2>
               </div>
+            </div>
 
+            <form id="watch-form" data-mode="add">
               <label class="field">
-                <span>Initiative name</span>
-                <input id="initiative-name" type="text" placeholder="Customer research sprint" />
+                <span>Title</span>
+                <input id="title-input" type="text" placeholder="The X-Files" />
               </label>
 
               <label class="field">
-                <span>Owner</span>
-                <input id="initiative-owner" type="text" placeholder="Alex" />
-              </label>
-
-              <label class="field">
-                <span>Priority</span>
-                <select id="initiative-priority">
-                  <option value="1">Critical</option>
-                  <option value="2">High</option>
-                  <option value="3" selected>Normal</option>
-                  <option value="4">Low</option>
-                </select>
-              </label>
-
-              <label class="field field-inline">
-                <input id="initiative-blocked" type="checkbox" />
-                <span>Blocked pending buy-in</span>
+                <span>Genre</span>
+                <input id="genre-input" type="text" placeholder="Paranormal paranoia" />
               </label>
 
               <div class="form-actions">
-                <button id="add-initiative" type="submit" class="button button-primary">Add initiative</button>
-                <button id="clear-form" type="button" class="button button-ghost">Reset form</button>
+                <button id="submit-copy" type="submit" class="button button-primary">Add to watch list</button>
+                <button id="cancel-edit" type="button" class="button button-secondary" hidden>Cancel edit</button>
               </div>
             </form>
+          </section>
 
-            <article class="card preview-card">
-              <div class="card-header">
-                <h3>Live preview</h3>
-                <p>Updated via MeetingSpeak input handlers.</p>
+          <section class="chrome-panel sidebar-panel">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Sneak preview</p>
+                <h2>Tonight on channel 62</h2>
               </div>
-              <div id="preview-card" class="preview-shell">
-                <p class="preview-pill">Priority 3</p>
-                <h4 id="preview-title">Customer research sprint</h4>
-                <p id="preview-owner">Owned by Alex</p>
-                <p id="preview-status">On track and ready for review.</p>
-              </div>
-            </article>
+            </div>
+
+            <div id="preview-shell" class="preview-shell">
+              <div class="preview-sticker">Be kind. Rewind.</div>
+              <p class="preview-label">Up next</p>
+              <h3 id="preview-title">Mystery Science Theater 3000</h3>
+              <p id="preview-genre">Comfort-riffing nonsense</p>
+              <p id="preview-stamp" class="preview-stamp">Fresh off the dial</p>
+            </div>
+          </section>
+        </aside>
+
+        <section id="watch-board" class="chrome-panel board-panel">
+          <div class="section-heading board-heading">
+            <div>
+              <p class="eyebrow">Shelf management</p>
+              <h2>Search the stack, sort the marathon, and keep the weird stuff handy.</h2>
+            </div>
+            <button id="restore-samples" type="button" class="button button-secondary">Restore sample tapes</button>
           </div>
 
           <div class="toolbar">
             <label class="field">
               <span>Search</span>
-              <input id="initiative-search" type="search" placeholder="Filter by name or owner" />
+              <input id="search-input" type="search" placeholder="Title or genre" />
+            </label>
+
+            <label class="field">
+              <span>Genre</span>
+              <select id="genre-filter">
+                <option value="all">All genres</option>
+              </select>
             </label>
 
             <label class="field">
               <span>Status</span>
               <select id="status-filter">
-                <option value="all">All</option>
-                <option value="on-track">On track</option>
-                <option value="blocked">Blocked</option>
+                <option value="all">All statuses</option>
+                <option value="queued">Queued</option>
+                <option value="watched">Watched</option>
               </select>
             </label>
           </div>
 
+          <div id="board-status" class="board-status">Loading stack...</div>
+
           <div id="empty-state" class="empty-state" hidden>
-            <h3>No initiatives match this view.</h3>
-            <p>Broaden the filter or restore the sample portfolio.</p>
+            <h3>No tapes in this slice of the timeline.</h3>
+            <p>Change the filters or restore the sample lineup.</p>
           </div>
 
-          <div id="initiative-list" class="initiative-list" aria-live="polite"></div>
+          <div id="watch-list" class="watch-list" aria-live="polite"></div>
         </section>
-
-        <aside class="sidebar">
-          <section class="panel side-panel">
-            <div class="section-heading compact">
-              <div>
-                <p class="eyebrow">Draft workspace</p>
-                <h2>Editable notes</h2>
-              </div>
-              <button id="clear-notes" class="button button-ghost">Clear</button>
-            </div>
-
-            <label class="field">
-              <span>Meeting notes</span>
-              <textarea id="meeting-notes" rows="12" placeholder="Capture the talking points, decisions, and follow-ups here."></textarea>
-            </label>
-
-            <div class="status-chip-row">
-              <div id="draft-status" class="status-chip">Autosave idle</div>
-              <div id="draft-meta" class="muted-copy">Nothing stored yet.</div>
-            </div>
-
-            <div class="form-actions">
-              <button id="save-notes" class="button button-primary">Save now</button>
-              <button id="announce-notes" class="button button-secondary">Announce status</button>
-            </div>
-          </section>
-
-          <section class="panel side-panel">
-            <div class="section-heading compact">
-              <div>
-                <p class="eyebrow">Async simulation</p>
-                <h2>Quarterly pulse</h2>
-              </div>
-            </div>
-
-            <div id="sync-copy" class="sync-copy">
-              <p>Use the sync action to simulate a delayed job with loading, timeout protection, and UI state changes.</p>
-            </div>
-
-            <div id="sync-loader" class="loader-shell" hidden>
-              <div class="loader-ring" aria-hidden="true"></div>
-              <p>Aligning cross-functional metrics...</p>
-            </div>
-
-            <div id="sync-status" class="sync-status">Standing by.</div>
-          </section>
-        </aside>
-      </div>
+      </section>
     </main>
 
     <div id="toast-stack" class="toast-stack" aria-live="polite" aria-atomic="true"></div>
