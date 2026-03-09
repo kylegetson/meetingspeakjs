@@ -1,0 +1,12 @@
+{
+  "name": "meetingspeak",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Browser-first JavaScript runtime DSL with corporate-jargon browser APIs.",
+  "scripts": {
+    "build": "node ./scripts/build.mjs"
+  },
+  "devDependencies": {
+    "terser": "^5.39.0"
+  }
+}
