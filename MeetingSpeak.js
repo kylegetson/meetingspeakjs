@@ -15,7 +15,8 @@
     professional: true,
     buzzword: true,
     unhinged: true,
-    boardroom: true
+    boardroom: true,
+    sports: true
   };
 
   function isString(value) {
@@ -65,6 +66,10 @@
       if (runtimeConfig.tone === 'boardroom') {
         return 'Board directive: ' + message;
       }
+
+      if (runtimeConfig.tone === 'sports') {
+        return message + ' Flag on the play. Review the tape.';
+      }
     }
 
     if (runtimeConfig.tone === 'buzzword') {
@@ -77,6 +82,10 @@
 
     if (runtimeConfig.tone === 'boardroom') {
       return '[executive summary] ' + message;
+    }
+
+    if (runtimeConfig.tone === 'sports') {
+      return '[play-by-play] ' + message;
     }
 
     return message;

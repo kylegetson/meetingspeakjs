@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>MeetingSpeak Demo | Watchlist Control Room</title>
+    <title>MeetingSpeak Demo | Content Pipeline Command Center</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
@@ -15,19 +15,19 @@
       <a class="brand" href="../docs/index.html">MeetingSpeak.js</a>
       <nav class="topnav" aria-label="Demo navigation">
         <a href="../docs/index.html">Docs</a>
-        <a href="#watch-board">Board</a>
-        <a href="#recommendations-panel">Recommendations</a>
+        <a href="#watch-board">Pipeline</a>
+        <a href="#recommendations-panel">Intelligence</a>
       </nav>
     </header>
 
     <main class="shell">
       <section id="hero-panel" class="chrome-panel hero-panel">
         <div class="hero-copy">
-          <p class="eyebrow">v2 demo</p>
-          <h1>Run a tiny watchlist app with richer state, rendering, feedback, and just enough workplace satire.</h1>
+          <p class="eyebrow">v3 demo &mdash; Q3 Edition</p>
+          <h1>Orchestrate high-impact content consumption across your strategic viewing portfolio.</h1>
           <p class="hero-lede">
-            Everything here runs directly in the browser with one script file, no build step, and no framework trying to
-            unionize your markup.
+            Everything here runs directly in the browser with one script file, no build step, and no framework
+            trying to schedule a mandatory synergy workshop with your markup.
           </p>
         </div>
 
@@ -39,10 +39,11 @@
               <option value="buzzword">Buzzword</option>
               <option value="boardroom">Boardroom</option>
               <option value="unhinged">Unhinged</option>
+              <option value="sports">Sports Analogy</option>
             </select>
           </label>
 
-          <div id="tone-caption" class="tone-caption">Professional mode keeps the joke mostly in the names.</div>
+          <div id="tone-caption" class="tone-caption">Professional mode keeps the joke mostly in the names. Recommended for all-hands.</div>
         </div>
 
         <div id="hero-stats" class="hero-stats" aria-live="polite"></div>
@@ -54,23 +55,26 @@
             <div class="section-heading">
               <div>
                 <p class="eyebrow">Composer</p>
-                <h2 id="composer-kicker">Add something to the queue</h2>
+                <h2 id="composer-kicker">Add a deliverable to the pipeline</h2>
               </div>
-              <button id="restore-samples" type="button" class="button button-secondary">Restore samples</button>
+              <button id="restore-samples" type="button" class="button button-secondary">Restore roster</button>
             </div>
 
             <form id="watch-form">
               <label class="field">
-                <span>Title</span>
-                <input id="title-input" type="text" placeholder="Severance" />
+                <span>Content deliverable</span>
+                <input id="title-input" type="text" placeholder="e.g. Severance (Prestige Drama, Q1)" />
               </label>
 
               <label class="field">
-                <span>Service</span>
+                <span>Vendor platform</span>
                 <select id="service-input">
                   <option>Apple TV+</option>
+                  <option>BritBox</option>
                   <option>Criterion Channel</option>
                   <option>Dropout</option>
+                  <option>HBO</option>
+                  <option>Hulu</option>
                   <option>Max</option>
                   <option>Netflix</option>
                   <option>Peacock</option>
@@ -80,50 +84,51 @@
               </label>
 
               <label class="field">
-                <span>Status</span>
+                <span>Pipeline stage</span>
                 <select id="status-input">
-                  <option value="queued">Queued</option>
-                  <option value="watching">Watching</option>
-                  <option value="watched">Watched</option>
+                  <option value="queued">Pre-Game</option>
+                  <option value="watching">Crushing It</option>
+                  <option value="watched">Win Column</option>
                 </select>
               </label>
 
               <label class="field">
-                <span>Trailer line</span>
-                <textarea id="note-input" rows="3" placeholder="Petty office politics. Excellent coats."></textarea>
+                <span>Executive summary</span>
+                <textarea id="note-input" rows="3" placeholder="Moves the needle. Checks all boxes. Strong synergy potential."></textarea>
               </label>
 
               <div class="form-actions">
-                <button id="submit-copy" type="submit" class="button button-primary">Add to board</button>
-                <button id="cancel-edit" type="button" class="button button-ghost" hidden>Cancel edit</button>
+                <button id="submit-copy" type="submit" class="button button-primary">Ship to board</button>
+                <button id="cancel-edit" type="button" class="button button-ghost" hidden>Cancel renegotiation</button>
               </div>
             </form>
 
             <div class="preview-meta">
-              <p>Double-click the preview to punch up the trailer line.</p>
+              <p>Double-click the preview to punch up the executive summary. Or hit the button for instant corporate.</p>
+              <button id="inject-buzzword" type="button" class="button button-ghost inject-button">Inject buzzword</button>
             </div>
 
             <article id="preview-card" class="preview-card" tabindex="0">
               <p class="preview-label">Preview</p>
               <h3 id="preview-title">Severance</h3>
-              <p id="preview-service" class="preview-service">Criterion Channel</p>
-              <p id="preview-note" class="preview-note">Petty office politics. Excellent coats.</p>
-              <div id="preview-status" class="status-chip">Queued</div>
+              <p id="preview-service" class="preview-service">Netflix</p>
+              <p id="preview-note" class="preview-note">Peak prestige content. Excellent ROI on couch time.</p>
+              <div id="preview-status" class="status-chip">Pre-Game</div>
             </article>
           </section>
 
           <section id="recommendations-panel" class="chrome-panel sidebar-panel">
             <div class="section-heading">
               <div>
-                <p class="eyebrow">Recommendations</p>
-                <h2>Mock suggestions, real loading state</h2>
+                <p class="eyebrow">Content Intelligence&trade;</p>
+                <h2>AI-Powered Viewing Recommendations</h2>
               </div>
-              <button id="refresh-recommendations" type="button" class="button button-ghost">Refresh picks</button>
+              <button id="refresh-recommendations" type="button" class="button button-ghost">Run algorithm</button>
             </div>
 
             <p class="panel-copy">
-              This panel uses <code>PULSE_CHECK</code>, <code>AIR_COVER</code>, and list rendering helpers to simulate a tiny
-              async workflow without pretending a local HTML file has an actual backend.
+              This panel uses <code>PULSE_CHECK</code>, <code>AIR_COVER</code>, and list rendering helpers to simulate a
+              proprietary content intelligence workflow. The vendor is completely fake. The loading state is real.
             </p>
 
             <div id="recommendations" class="recommendations"></div>
@@ -132,8 +137,8 @@
           <section class="chrome-panel sidebar-panel">
             <div class="section-heading">
               <div>
-                <p class="eyebrow">Activity</p>
-                <h2>State changes with a paper trail</h2>
+                <p class="eyebrow">Activity Log</p>
+                <h2>Real-time synergy events</h2>
               </div>
             </div>
 
@@ -144,46 +149,46 @@
         <section id="watch-board" class="chrome-panel board-panel">
           <div class="section-heading board-heading">
             <div>
-              <p class="eyebrow">Board</p>
-              <h2>Filter the queue, cycle statuses, edit entries, and keep the whole thing readable in one pass.</h2>
+              <p class="eyebrow">Pipeline Board</p>
+              <h2>Leverage your content pipeline. Advance the ball. Iterate. Win.</h2>
             </div>
             <a id="clear-filters" href="#watch-board" class="button button-ghost">Clear filters</a>
           </div>
 
           <div class="toolbar">
             <label class="field">
-              <span>Search</span>
-              <input id="search-input" type="search" placeholder="Title, service, or trailer line" />
+              <span>Search pipeline</span>
+              <input id="search-input" type="search" placeholder="Title, vendor, or executive summary" />
             </label>
 
             <label class="field">
-              <span>Service</span>
+              <span>Vendor</span>
               <select id="service-filter"></select>
             </label>
 
             <label class="field">
-              <span>Status</span>
+              <span>Pipeline stage</span>
               <select id="status-filter">
-                <option value="all">All statuses</option>
-                <option value="queued">Queued</option>
-                <option value="watching">Watching</option>
-                <option value="watched">Watched</option>
+                <option value="all">All stages</option>
+                <option value="queued">Pre-Game</option>
+                <option value="watching">Crushing It</option>
+                <option value="watched">Win Column</option>
               </select>
             </label>
 
             <label class="field">
               <span>Sort</span>
               <select id="sort-filter">
-                <option value="recent">Newest first</option>
+                <option value="recent">Most recent</option>
                 <option value="title">Title A-Z</option>
-                <option value="service">Service A-Z</option>
-                <option value="status">Status flow</option>
+                <option value="service">Vendor A-Z</option>
+                <option value="status">Stage flow</option>
               </select>
             </label>
           </div>
 
           <div id="summary-bar" class="summary-bar"></div>
-          <div id="board-status" class="board-status">Standing by.</div>
+          <div id="board-status" class="board-status">Standing by. Ready to move the ball.</div>
           <div id="empty-state-shell"></div>
           <div id="watch-list" class="watch-list" aria-live="polite"></div>
         </section>
